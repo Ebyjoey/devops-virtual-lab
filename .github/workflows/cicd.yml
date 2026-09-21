@@ -2,7 +2,8 @@ name: DevOps CI/CD Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -25,9 +26,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build \
-            -t ghcr.io/ebyjoey/devops-virtual-lab:${GITHUB_SHA} \
-            ./app
+          docker build -t ghcr.io/ebyjoey/devops-virtual-lab:${GITHUB_SHA} ./app
 
           docker tag \
             ghcr.io/ebyjoey/devops-virtual-lab:${GITHUB_SHA} \
@@ -68,137 +67,7 @@ jobs:
             "sudo kubectl apply -f ~/devops-virtual-lab/k8s/deployment.yml"
 
           ssh -i ~/.ssh/devops-lab-key ubuntu@"$SERVER_IP" \
-            "sudo kubectl set image deployment/devops-app \
-            devops-container=$IMAGE"
-
-          ssh -i ~/.ssh/devops-lab-key ubuntu@"$SERVER_IP" \
-            "sudo kubectl rollout status deployment/devops-app --timeout=180s"name: DevOps CI/CD Pipeline
-
-on:
-  push:
-    branches: ["main"]
-
-permissions:
-  contents: read
-  packages: write
-
-jobs:
-  build-deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Docker Image
-        run: |
-          docker build \
-            -t ghcr.io/${{ github.repository_owner }}/devops-virtual-lab:${{ github.sha }} \
-            ./app
-
-          docker tag \
-            ghcr.io/${{ github.repository_owner }}/devops-virtual-lab:${{ github.sha }} \
-            ghcr.io/${{ github.repository_owner }}/devops-virtual-lab:latest
-
-      - name: Push Docker Image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/devops-virtual-lab:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/devops-virtual-lab:latest
-
-      - name: Prepare SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/devops-lab-key
-          chmod 600 ~/.ssh/devops-lab-key
-
-      - name: Deploy to Kubernetes
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          IMAGE: ghcr.io/${{ github.repository_owner }}/devops-virtual-lab:${{ github.sha }}
-        run: |
-          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
-
-  name: DevOps CI/CD Pipeline
-
-on:
-  push:
-    branches: ["main"]
-
-permissions:
-  contents: read
-  packages: write
-
-jobs:
-  build-deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Docker Image
-        run: |
-          docker build \
-            -t ghcr.io/ebyjoey/devops-virtual-lab:${GITHUB_SHA} \
-            ./app
-
-          docker tag \
-            ghcr.io/ebyjoey/devops-virtual-lab:${GITHUB_SHA} \
-            ghcr.io/ebyjoey/devops-virtual-lab:latest
-
-      - name: Push Docker Image
-        run: |
-          docker push ghcr.io/ebyjoey/devops-virtual-lab:${GITHUB_SHA}
-          docker push ghcr.io/ebyjoey/devops-virtual-lab:latest
-
-      - name: Prepare SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/devops-lab-key
-          chmod 600 ~/.ssh/devops-lab-key
-
-      - name: Deploy to Kubernetes
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          IMAGE: ghcr.io/ebyjoey/devops-virtual-lab:${{ github.sha }}
-        run: |
-          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
-
-          ssh -i ~/.ssh/devops-lab-key ubuntu@"$SERVER_IP" \
-            "mkdir -p ~/devops-virtual-lab/k8s"
-
-          scp -i ~/.ssh/devops-lab-key \
-            k8s/deployment.yml \
-            k8s/service.yml \
-            ubuntu@"$SERVER_IP":~/devops-virtual-lab/k8s/
-
-          ssh -i ~/.ssh/devops-lab-key ubuntu@"$SERVER_IP" \
-            "sudo kubectl apply -f ~/devops-virtual-lab/k8s/service.yml"
-
-          ssh -i ~/.ssh/devops-lab-key ubuntu@"$SERVER_IP" \
-            "sudo kubectl apply -f ~/devops-virtual-lab/k8s/deployment.yml"
-
-          ssh -i ~/.ssh/devops-lab-key ubuntu@"$SERVER_IP" \
-            "sudo kubectl set image deployment/devops-app \
-            devops-container=$IMAGE"
+            "sudo kubectl set image deployment/devops-app devops-container=$IMAGE"
 
           ssh -i ~/.ssh/devops-lab-key ubuntu@"$SERVER_IP" \
             "sudo kubectl rollout status deployment/devops-app --timeout=180s"
