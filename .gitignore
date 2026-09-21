@@ -1,0 +1,22 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+
+# Terraform binaries/installers
+terraform_*.zip
+
+# SSH/private keys
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Ansible
+*.retry
+
+# OS/editor files
+.DS_Store
+*.swp
